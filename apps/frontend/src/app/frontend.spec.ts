@@ -143,7 +143,12 @@ describe('Frontend Angular Suite — Signals Store, API Client, Checkout & Admin
       // Attempt 3rd unit -> exceeds stock (2)
       await store.addToCart('prod-tech-1');
       expect(store.totalItemsCount()).toBe(2);
-      expect(store.errorMessage()).toContain('Stock máximo alcanzado');
+      expect(store.errorMessage()).toContain('Has alcanzado el límite de stock disponible');
+
+      // Dismiss modal notification (X button / Entendido)
+      store.dismissNotification();
+      expect(store.errorMessage()).toBeNull();
+      expect(store.infoMessage()).toBeNull();
 
       // Decrement from 2 -> 1
       await store.decrementFromCart('prod-tech-1');
@@ -278,6 +283,9 @@ describe('Frontend Angular Suite — Signals Store, API Client, Checkout & Admin
         adminComp.categoryPercentage = 15;
         await adminComp.saveChanges();
         expect(apiMock.updateRulesConfig).toHaveBeenCalled();
+
+        await adminComp.resetFullDemo();
+        expect(apiMock.resetDemo).toHaveBeenCalled();
       });
     });
   });

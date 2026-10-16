@@ -13,8 +13,8 @@ import { CartStoreService } from './state/cart-store.service';
         <div class="brand">
           <span class="logo-dot"></span>
           <div>
-            <h1>Core E-Commerce Checkout</h1>
-            <small>Motor de Descuentos Acumulativos en Cascada · Arquitectura Hexagonal</small>
+            <h1>Core E-Commerce Store</h1>
+            <small>Tienda Oficial · Descuentos Acumulativos en Línea</small>
           </div>
         </div>
         <nav class="nav-links">

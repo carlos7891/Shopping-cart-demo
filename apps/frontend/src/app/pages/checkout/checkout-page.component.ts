@@ -9,32 +9,65 @@ import { CartStoreService } from '../../state/cart-store.service';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="checkout-layout">
-      <!-- Notificación Reactiva Persistente del Límite del 35% (HU 4) -->
-      @if (store.isMaxDiscountCapReached()) {
-        <div class="cap-alert-banner" role="alert" data-testid="max-discount-cap-alert">
-          <div class="cap-alert-icon">🛡️</div>
-          <div class="cap-alert-content">
-            <strong>{{ store.maxDiscountCapBannerText() }}</strong>
-            <span>
-              El cálculo bruto en cascada era del
-              <b>{{ store.quoteBreakdown()?.uncappedDiscountPercentage }}%</b>
-              (\${{ (store.quoteBreakdown()!.uncappedTotalDiscountCents / 100).toFixed(2) }} USD),
-              y el motor protegió el margen truncándolo exactamente al
-              <b>{{ store.quoteBreakdown()?.maxCapPercentage }}%</b>.
-            </span>
+      <!-- Modal de Experiencia de Usuario para Avisos de Stock y Confirmación de Orden -->
+      @if (store.errorMessage() || store.infoMessage()) {
+        <div
+          class="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          data-testid="notification-modal"
+          (click)="store.dismissNotification()"
+        >
+          <div
+            class="modal-card"
+            [class.modal-error]="!!store.errorMessage()"
+            [class.modal-success]="!!store.infoMessage()"
+            (click)="$event.stopPropagation()"
+          >
+            <div class="modal-header">
+              <div class="modal-title-group">
+                <span class="modal-icon">{{ store.errorMessage() ? '⚠️' : '✅' }}</span>
+                <h3>{{ store.errorMessage() ? 'Límite de Stock / Aviso' : 'Operación Exitosa' }}</h3>
+              </div>
+              <button
+                type="button"
+                class="modal-close-btn"
+                aria-label="Cerrar notificación"
+                (click)="store.dismissNotification()"
+              >
+                ✕
+              </button>
+            </div>
+            <p class="modal-body">
+              {{ store.errorMessage() ?? store.infoMessage() }}
+            </p>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-primary"
+                (click)="store.dismissNotification()"
+              >
+                Entendido
+              </button>
+            </div>
           </div>
         </div>
       }
 
-      @if (store.errorMessage()) {
-        <div class="feedback-banner error" role="alert">
-          ⚠️ {{ store.errorMessage() }}
-        </div>
-      }
-
-      @if (store.infoMessage()) {
-        <div class="feedback-banner success">
-          ✅ {{ store.infoMessage() }}
+      <!-- Notificación Reactiva Persistente del Límite del 35% (HU 4) -->
+      @if (store.isMaxDiscountCapReached()) {
+        <div class="cap-alert-banner" role="alert" data-testid="max-discount-cap-alert">
+          <div class="cap-alert-icon">🎉</div>
+          <div class="cap-alert-content">
+            <strong>{{ store.maxDiscountCapBannerText() }}</strong>
+            <span>
+              Tus descuentos combinados alcanzaron el
+              <b>{{ store.quoteBreakdown()?.uncappedDiscountPercentage }}%</b>
+              (\${{ (store.quoteBreakdown()!.uncappedTotalDiscountCents / 100).toFixed(2) }} USD),
+              aplicándose el tope máximo permitido del
+              <b>{{ store.quoteBreakdown()?.maxCapPercentage }}%</b>.
+            </span>
+          </div>
         </div>
       }
 
@@ -45,14 +78,11 @@ import { CartStoreService } from '../../state/cart-store.service';
             <div>
               <h2>Catálogo de Productos</h2>
               <p class="subtitle">
-                Agrega productos en tiempo real. Categoría
-                <b>{{ store.rulesConfig().categoryRule.targetCategory }}</b> otorga
-                <b>{{ store.rulesConfig().categoryRule.discountPercentage }}%</b> inicial.
+                Productos en la categoría
+                <b>{{ store.rulesConfig().categoryRule.targetCategory }}</b> cuentan con
+                <b>{{ store.rulesConfig().categoryRule.discountPercentage }}%</b> de descuento directo.
               </p>
             </div>
-            <button class="btn btn-outline" (click)="store.resetDemoEnvironment()">
-              Restaurar Stock/Reglas
-            </button>
           </div>
 
           <div class="product-grid">
@@ -63,7 +93,7 @@ import { CartStoreService } from '../../state/cart-store.service';
                     {{ product.category }}
                   </span>
                   <span class="stock-tag" [class.low-stock]="product.stock <= 2">
-                    Stock: {{ product.stock }}
+                    Disponibles: {{ product.stock }}
                   </span>
                 </div>
                 <h3>{{ product.name }}</h3>
@@ -95,11 +125,23 @@ import { CartStoreService } from '../../state/cart-store.service';
 
         <!-- Columna Derecha: Carrito Reactivo y Desglose en Cascada (HU 1, HU 2, HU 3) -->
         <aside class="panel summary-panel">
-          <h2>Resumen de Checkout en Cascada</h2>
+          <div class="summary-header-row">
+            <h2>Tu Carrito de Compras</h2>
+            @if (store.cartLines().length > 0) {
+              <button
+                type="button"
+                class="btn btn-outline btn-sm"
+                data-testid="clear-cart-btn"
+                (click)="store.clearCart()"
+              >
+                🗑️ Vaciar carrito
+              </button>
+            }
+          </div>
 
           @if (store.cartLines().length === 0) {
             <div class="empty-cart-box">
-              <p>Tu carrito está vacío. Agrega productos del catálogo para calcular descuentos en cascada.</p>
+              <p>Tu carrito está vacío. Selecciona productos del catálogo para comenzar tu compra.</p>
             </div>
           } @else {
             <ul class="cart-list">
@@ -113,7 +155,13 @@ import { CartStoreService } from '../../state/cart-store.service';
                   </div>
                   <div class="cart-item-right">
                     <span>\${{ line.lineSubtotalUsd.toFixed(2) }}</span>
-                    <button class="btn-remove" (click)="store.removeFromCart(line.product.id)">✕</button>
+                    <button
+                      class="btn-remove"
+                      title="Eliminar producto"
+                      (click)="store.removeFromCart(line.product.id)"
+                    >
+                      ✕
+                    </button>
                   </div>
                 </li>
               }
@@ -126,16 +174,16 @@ import { CartStoreService } from '../../state/cart-store.service';
                 <input
                   id="couponInput"
                   type="text"
-                  placeholder="Ej: WELCOME2026 o VIP50"
+                  placeholder="Ej: WELCOME2026"
                   [ngModel]="store.couponInput()"
                   (ngModelChange)="store.couponInput.set($event)"
                 />
                 <button class="btn btn-primary" (click)="store.applyCoupon()">Aplicar</button>
               </div>
               <div class="quick-coupons">
-                <span>Probar rápido:</span>
+                <span>Cupones disponibles:</span>
                 <button class="chip" (click)="store.applyCoupon('WELCOME2026')">WELCOME2026 (15%)</button>
-                <button class="chip chip-vip" (click)="store.applyCoupon('VIP50')">VIP50 (30% - Tope 35%)</button>
+                <button class="chip chip-vip" (click)="store.applyCoupon('VIP50')">VIP50 (30%)</button>
                 <button class="chip chip-muted" (click)="store.applyCoupon('EXPIRED2024')">EXPIRED2024</button>
               </div>
               @if (store.quoteBreakdown(); as qCoupon) {
@@ -169,7 +217,7 @@ import { CartStoreService } from '../../state/cart-store.service';
                     <small class="step-reason">{{ step.reason }}</small>
                     @if (step.applied) {
                       <small class="step-sub">
-                        Subtotal remanente tras regla: \${{ (step.subtotalAfterRuleCents / 100).toFixed(2) }} USD
+                        Subtotal tras descuento: \${{ (step.subtotalAfterRuleCents / 100).toFixed(2) }} USD
                       </small>
                     }
                   </div>
@@ -179,11 +227,11 @@ import { CartStoreService } from '../../state/cart-store.service';
 
                 <div class="breakdown-line">
                   <span>Porcentaje de Descuento Efectivo</span>
-                  <span class="badge-pct">{{ q.effectiveDiscountPercentage }}% (Tope máx: {{ q.maxCapPercentage }}%)</span>
+                  <span class="badge-pct">{{ q.effectiveDiscountPercentage }}% (Máx: {{ q.maxCapPercentage }}%)</span>
                 </div>
 
                 <div class="breakdown-line savings-line">
-                  <span>Ahorro Consolidado Total</span>
+                  <span>Ahorro Total</span>
                   <strong>-\${{ q.totalDiscountUsd.toFixed(2) }} USD</strong>
                 </div>
 
@@ -197,21 +245,21 @@ import { CartStoreService } from '../../state/cart-store.service';
                   [disabled]="store.loading()"
                   (click)="store.confirmCheckout()"
                 >
-                  {{ store.loading() ? 'Procesando Transacción ACID...' : 'Confirmar y Pagar Orden' }}
+                  {{ store.loading() ? 'Procesando Compra...' : 'Confirmar y Pagar Orden' }}
                 </button>
               </div>
             }
           }
 
-          <!-- Historial de Órdenes Persistidas en SQLite (HU 3) -->
+          <!-- Historial de Órdenes Recientes (HU 3) -->
           @if (store.recentOrders().length > 0) {
             <div class="orders-history">
-              <h3>Órdenes Persistidas en SQLite ({{ store.recentOrders().length }})</h3>
+              <h3>Mis Compras Recientes ({{ store.recentOrders().length }})</h3>
               @for (ord of store.recentOrders().slice(0, 3); track ord.orderId) {
                 <div class="order-pill">
                   <div>
                     <strong>{{ ord.orderId }}</strong>
-                    <small>{{ ord.createdAt | date:'shortTime' }} · Desc: {{ ord.breakdown.effectiveDiscountPercentage }}%</small>
+                    <small>{{ ord.createdAt | date:'shortTime' }} · Ahorro: {{ ord.breakdown.effectiveDiscountPercentage }}%</small>
                   </div>
                   <span class="order-total">\${{ ord.breakdown.finalTotalUsd.toFixed(2) }} USD</span>
                 </div>

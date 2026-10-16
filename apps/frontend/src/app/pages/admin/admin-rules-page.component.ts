@@ -19,8 +19,11 @@ import { CartStoreService } from '../../state/cart-store.service';
             </p>
           </div>
           <div class="preset-actions">
+            <button class="btn btn-outline" (click)="resetFullDemo()">
+              🔄 Restaurar Stock y Reglas Iniciales
+            </button>
             <button class="btn btn-outline" (click)="applyPreset('OFFICIAL_KATA')">
-              Restaurar Reglas Oficiales Kata (27.33% máx)
+              Reglas Oficiales Kata (27.33% máx)
             </button>
             <button class="btn btn-accent" (click)="applyPreset('DEMO_CAP_35')">
               Activar Preset Demo Tope &gt;35% (25% / 10% / 15%)
@@ -28,11 +31,41 @@ import { CartStoreService } from '../../state/cart-store.service';
           </div>
         </div>
 
-        @if (store.infoMessage()) {
-          <div class="feedback-banner success">✅ {{ store.infoMessage() }}</div>
-        }
-        @if (store.errorMessage()) {
-          <div class="feedback-banner error">⚠️ {{ store.errorMessage() }}</div>
+        @if (store.errorMessage() || store.infoMessage()) {
+          <div
+            class="modal-backdrop"
+            role="dialog"
+            aria-modal="true"
+            (click)="store.dismissNotification()"
+          >
+            <div
+              class="modal-card"
+              [class.modal-error]="!!store.errorMessage()"
+              [class.modal-success]="!!store.infoMessage()"
+              (click)="$event.stopPropagation()"
+            >
+              <div class="modal-header">
+                <div class="modal-title-group">
+                  <span class="modal-icon">{{ store.errorMessage() ? '⚠️' : '✅' }}</span>
+                  <h3>{{ store.errorMessage() ? 'Error de Configuración' : 'Configuración Aplicada' }}</h3>
+                </div>
+                <button
+                  type="button"
+                  class="modal-close-btn"
+                  aria-label="Cerrar notificación"
+                  (click)="store.dismissNotification()"
+                >
+                  ✕
+                </button>
+              </div>
+              <p class="modal-body">{{ store.errorMessage() ?? store.infoMessage() }}</p>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-primary" (click)="store.dismissNotification()">
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
         }
 
         <div class="admin-grid">
@@ -171,6 +204,11 @@ export class AdminRulesPageComponent implements OnInit {
 
   public async applyPreset(preset: 'OFFICIAL_KATA' | 'DEMO_CAP_35'): Promise<void> {
     await this.store.activateRulePreset(preset);
+    this.syncFormFromStore();
+  }
+
+  public async resetFullDemo(): Promise<void> {
+    await this.store.resetDemoEnvironment();
     this.syncFormFromStore();
   }
 
