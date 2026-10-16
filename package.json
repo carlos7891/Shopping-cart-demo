@@ -1,0 +1,25 @@
+{
+  "name": "core-ecommerce-cumulative-discounts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Core E-Commerce Checkout with Cumulative Discounts Engine (Hexagonal NestJS + Angular Signals Monorepo)",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build:shared": "npm run build --workspace=@shopping-cart/shared",
+    "build:backend": "npm run build:shared && npm run build --workspace=@shopping-cart/backend",
+    "build:frontend": "npm run build:shared && npm run build --workspace=@shopping-cart/frontend",
+    "build": "npm run build:shared && npm run build:backend && npm run build:frontend",
+    "start:backend": "npm run start --workspace=@shopping-cart/backend",
+    "start:frontend": "npm run start --workspace=@shopping-cart/frontend",
+    "test:shared": "npm run test:coverage --workspace=@shopping-cart/shared",
+    "test:backend": "npm run test:coverage --workspace=@shopping-cart/backend",
+    "test:frontend": "npm run test:coverage --workspace=@shopping-cart/frontend",
+    "test:coverage": "npm run test:shared && npm run test:backend && npm run test:frontend"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
