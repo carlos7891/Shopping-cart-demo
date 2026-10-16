@@ -16,11 +16,6 @@
   height: 100%;
   object-fit: contain;
   padding: 0.5rem;
-  transition: transform 0.25s ease;
-}
-
-.carousel-wrapper:hover .carousel-image {
-  transform: scale(1.04);
 }
 
 .carousel-btn {
