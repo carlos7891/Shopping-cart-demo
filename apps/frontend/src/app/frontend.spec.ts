@@ -11,6 +11,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppComponent } from './app.component';
 import { APP_ROUTES } from './app.routes';
+import { ImageCarouselComponent } from './components/image-carousel/image-carousel.component';
 import { AdminRulesPageComponent } from './pages/admin/admin-rules-page.component';
 import { CheckoutPageComponent } from './pages/checkout/checkout-page.component';
 import { EcommerceApiService } from './services/ecommerce-api.service';
@@ -272,17 +273,28 @@ describe('Frontend Angular Suite — Signals Store, API Client, Checkout & Admin
         const checkoutComp = new CheckoutPageComponent();
         checkoutComp.ngOnInit();
         expect(checkoutComp.store).toBe(store);
-
-        // Verify product image carousel navigation (multi-image and fallback)
         expect(checkoutComp.getProductImages('prod-tech-laptop').length).toBe(3);
-        expect(checkoutComp.getCurrentImage('prod-tech-laptop')).toBe('assets/laptop.webp');
-        checkoutComp.nextImage('prod-tech-laptop');
-        expect(checkoutComp.getCurrentImage('prod-tech-laptop')).toBe('assets/laptop2.webp');
-        checkoutComp.prevImage('prod-tech-laptop');
-        expect(checkoutComp.getCurrentImage('prod-tech-laptop')).toBe('assets/laptop.webp');
-        checkoutComp.selectImage('prod-tech-laptop', 2);
-        expect(checkoutComp.getActiveSlideIndex('prod-tech-laptop')).toBe(2);
-        expect(checkoutComp.getCurrentImage('unknown-id')).toBe('assets/monitor1.webp');
+        expect(checkoutComp.getPrimaryImage('prod-tech-laptop')).toBe('assets/laptop.webp');
+        expect(checkoutComp.getPrimaryImage('unknown-id')).toBe('assets/monitor1.webp');
+
+        // Verify reusable ImageCarouselComponent (DRY)
+        const carousel = new ImageCarouselComponent();
+        carousel.images = ['assets/laptop.webp', 'assets/laptop2.webp', 'assets/laptop3.webp'];
+        expect(carousel.hasMultipleImages()).toBe(true);
+        expect(carousel.currentImage()).toBe('assets/laptop.webp');
+
+        carousel.nextSlide();
+        expect(carousel.currentImage()).toBe('assets/laptop2.webp');
+        carousel.prevSlide();
+        expect(carousel.currentImage()).toBe('assets/laptop.webp');
+        carousel.selectSlide(2);
+        expect(carousel.activeIndex()).toBe(2);
+
+        // Single image / fallback behavior
+        carousel.images = [];
+        expect(carousel.hasMultipleImages()).toBe(false);
+        carousel.nextSlide();
+        carousel.prevSlide();
 
         const adminComp = new AdminRulesPageComponent();
         await adminComp.ngOnInit();
