@@ -88,6 +88,46 @@ import { CartStoreService } from '../../state/cart-store.service';
           <div class="product-grid">
             @for (product of store.products(); track product.id) {
               <article class="product-card" [class.tech-card]="product.category === 'Tecnología'">
+                <!-- Mini-Carrusel de Imágenes del Producto -->
+                <div class="product-carousel">
+                  <img
+                    class="product-image"
+                    [src]="getCurrentImage(product.id)"
+                    [alt]="product.name"
+                    loading="lazy"
+                  />
+
+                  @if (getProductImages(product.id).length > 1) {
+                    <button
+                      type="button"
+                      class="carousel-btn prev"
+                      aria-label="Imagen anterior"
+                      (click)="prevImage(product.id)"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      class="carousel-btn next"
+                      aria-label="Siguiente imagen"
+                      (click)="nextImage(product.id)"
+                    >
+                      ›
+                    </button>
+                    <div class="carousel-dots">
+                      @for (img of getProductImages(product.id); track img; let idx = $index) {
+                        <button
+                          type="button"
+                          class="dot"
+                          [class.active]="getActiveSlideIndex(product.id) === idx"
+                          [attr.aria-label]="'Ver imagen ' + (idx + 1)"
+                          (click)="selectImage(product.id, idx)"
+                        ></button>
+                      }
+                    </div>
+                  }
+                </div>
+
                 <div class="product-top">
                   <span class="badge" [class.badge-tech]="product.category === 'Tecnología'">
                     {{ product.category }}
@@ -147,11 +187,18 @@ import { CartStoreService } from '../../state/cart-store.service';
             <ul class="cart-list">
               @for (line of store.cartLines(); track line.product.id) {
                 <li class="cart-item">
-                  <div>
-                    <strong>{{ line.product.name }}</strong>
-                    <small class="block-meta">
-                      {{ line.quantity }} x \${{ line.product.priceUsd.toFixed(2) }} ({{ line.product.category }})
-                    </small>
+                  <div class="cart-item-left">
+                    <img
+                      class="cart-thumb"
+                      [src]="getCurrentImage(line.product.id)"
+                      [alt]="line.product.name"
+                    />
+                    <div>
+                      <strong>{{ line.product.name }}</strong>
+                      <small class="block-meta">
+                        {{ line.quantity }} x \${{ line.product.priceUsd.toFixed(2) }} ({{ line.product.category }})
+                      </small>
+                    </div>
                   </div>
                   <div class="cart-item-right">
                     <span>\${{ line.lineSubtotalUsd.toFixed(2) }}</span>
@@ -273,8 +320,60 @@ import { CartStoreService } from '../../state/cart-store.service';
 })
 export class CheckoutPageComponent implements OnInit {
   public readonly store = inject(CartStoreService);
+  public readonly activeSlideByProduct: Record<string, number> = {};
+
+  private readonly productGallery: Readonly<Record<string, readonly string[]>> = {
+    'prod-tech-laptop': [
+      'assets/laptop.webp',
+      'assets/laptop2.webp',
+      'assets/laptop3.webp'
+    ],
+    'prod-tech-monitor': ['assets/monitor1.webp'],
+    'prod-tech-keyboard': [
+      'assets/teclado1.webp',
+      'assets/teclado2.webp',
+      'assets/teclado3.webp'
+    ],
+    'prod-home-chair': [
+      'assets/silla1.webp',
+      'assets/silla2.webp',
+      'assets/silla3.webp'
+    ],
+    'prod-acc-backpack': ['assets/Morral-1.webp', 'assets/Morral-2.webp'],
+    'prod-book-arch': ['assets/libro.webp']
+  };
 
   public ngOnInit(): void {
     void this.store.initializeStore();
+  }
+
+  public getProductImages(productId: string): readonly string[] {
+    return this.productGallery[productId] ?? ['assets/monitor1.webp'];
+  }
+
+  public getActiveSlideIndex(productId: string): number {
+    return this.activeSlideByProduct[productId] ?? 0;
+  }
+
+  public getCurrentImage(productId: string): string {
+    const images = this.getProductImages(productId);
+    const index = this.getActiveSlideIndex(productId);
+    return images[index] ?? images[0];
+  }
+
+  public nextImage(productId: string): void {
+    const images = this.getProductImages(productId);
+    const current = this.getActiveSlideIndex(productId);
+    this.activeSlideByProduct[productId] = (current + 1) % images.length;
+  }
+
+  public prevImage(productId: string): void {
+    const images = this.getProductImages(productId);
+    const current = this.getActiveSlideIndex(productId);
+    this.activeSlideByProduct[productId] = (current - 1 + images.length) % images.length;
+  }
+
+  public selectImage(productId: string, index: number): void {
+    this.activeSlideByProduct[productId] = index;
   }
 }

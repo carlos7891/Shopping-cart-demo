@@ -273,6 +273,17 @@ describe('Frontend Angular Suite — Signals Store, API Client, Checkout & Admin
         checkoutComp.ngOnInit();
         expect(checkoutComp.store).toBe(store);
 
+        // Verify product image carousel navigation (multi-image and fallback)
+        expect(checkoutComp.getProductImages('prod-tech-laptop').length).toBe(3);
+        expect(checkoutComp.getCurrentImage('prod-tech-laptop')).toBe('assets/laptop.webp');
+        checkoutComp.nextImage('prod-tech-laptop');
+        expect(checkoutComp.getCurrentImage('prod-tech-laptop')).toBe('assets/laptop2.webp');
+        checkoutComp.prevImage('prod-tech-laptop');
+        expect(checkoutComp.getCurrentImage('prod-tech-laptop')).toBe('assets/laptop.webp');
+        checkoutComp.selectImage('prod-tech-laptop', 2);
+        expect(checkoutComp.getActiveSlideIndex('prod-tech-laptop')).toBe(2);
+        expect(checkoutComp.getCurrentImage('unknown-id')).toBe('assets/monitor1.webp');
+
         const adminComp = new AdminRulesPageComponent();
         await adminComp.ngOnInit();
         expect(adminComp.maxCapPercentage).toBe(35);
