@@ -8,127 +8,8 @@ import { CartStoreService } from '../../state/cart-store.service';
   selector: 'app-admin-rules-page',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  template: `
-    <div class="admin-container">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h2>⚙️ Rule Engine Studio (/admin)</h2>
-            <p class="subtitle">
-              Panel de administración en tiempo real para parametrizar las reglas secuenciales en cascada y demostrar el tope infranqueable del 35%.
-            </p>
-          </div>
-          <div class="preset-actions">
-            <button class="btn btn-outline" (click)="applyPreset('OFFICIAL_KATA')">
-              Restaurar Reglas Oficiales Kata (27.33% máx)
-            </button>
-            <button class="btn btn-accent" (click)="applyPreset('DEMO_CAP_35')">
-              Activar Preset Demo Tope &gt;35% (25% / 10% / 15%)
-            </button>
-          </div>
-        </div>
-
-        @if (store.infoMessage()) {
-          <div class="feedback-banner success">✅ {{ store.infoMessage() }}</div>
-        }
-        @if (store.errorMessage()) {
-          <div class="feedback-banner error">⚠️ {{ store.errorMessage() }}</div>
-        }
-
-        <div class="admin-grid">
-          <!-- Regla 1: Categoría -->
-          <div class="rule-card">
-            <h3>1. Regla de Categoría (Precedencia 1)</h3>
-            <label class="checkbox-row">
-              <input type="checkbox" [(ngModel)]="categoryEnabled" />
-              <span>Habilitar Descuento de Categoría</span>
-            </label>
-            <label>
-              Categoría Objetivo
-              <select [(ngModel)]="targetCategory">
-                <option value="Tecnología">Tecnología</option>
-                <option value="Hogar">Hogar</option>
-                <option value="Accesorios">Accesorios</option>
-                <option value="Libros">Libros</option>
-              </select>
-            </label>
-            <label>
-              Porcentaje de Descuento (%)
-              <input type="number" min="0" max="90" [(ngModel)]="categoryPercentage" />
-            </label>
-          </div>
-
-          <!-- Regla 2: Volumen -->
-          <div class="rule-card">
-            <h3>2. Regla por Volumen en Cascada (Precedencia 2)</h3>
-            <label class="checkbox-row">
-              <input type="checkbox" [(ngModel)]="volumeEnabled" />
-              <span>Habilitar Descuento por Volumen</span>
-            </label>
-            <label>
-              Umbral Mínimo post-categoría (USD)
-              <input type="number" min="0" [(ngModel)]="volumeThresholdUsd" />
-            </label>
-            <label>
-              Porcentaje de Descuento (%)
-              <input type="number" min="0" max="90" [(ngModel)]="volumePercentage" />
-            </label>
-          </div>
-
-          <!-- Regla 4: Tope Absoluto -->
-          <div class="rule-card">
-            <h3>4. Límite de Descuento Absoluto (Cap Policy)</h3>
-            <p class="subtitle">
-              Trunca cualquier combinación acumulada que supere este porcentaje sobre el subtotal original.
-            </p>
-            <label>
-              Tope Máximo Permitido (%)
-              <input type="number" min="1" max="90" [(ngModel)]="maxCapPercentage" />
-            </label>
-          </div>
-        </div>
-
-        <!-- Regla 3: Cupones -->
-        <div class="coupons-section">
-          <h3>3. Catálogo de Cupones Promocionales (Precedencia 3)</h3>
-          <table class="coupons-table">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>% Descuento</th>
-                <th>Activo</th>
-                <th>Expira (ISO)</th>
-                <th>Descripción</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (c of editableCoupons; track c.code) {
-                <tr>
-                  <td><strong>{{ c.code }}</strong></td>
-                  <td>
-                    <input type="number" min="1" max="90" [(ngModel)]="c.discountPercentage" />
-                  </td>
-                  <td>
-                    <input type="checkbox" [(ngModel)]="c.active" />
-                  </td>
-                  <td>
-                    <input type="text" [(ngModel)]="c.expiresAt" />
-                  </td>
-                  <td>{{ c.description }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        <div class="admin-footer">
-          <button class="btn btn-primary" (click)="saveChanges()">
-            Guardar Reglas en Motor Backend
-          </button>
-        </div>
-      </div>
-    </div>
-  `
+  templateUrl: './admin-rules-page.component.html',
+  styleUrl: './admin-rules-page.component.css'
 })
 export class AdminRulesPageComponent implements OnInit {
   public readonly store = inject(CartStoreService);
@@ -171,6 +52,11 @@ export class AdminRulesPageComponent implements OnInit {
 
   public async applyPreset(preset: 'OFFICIAL_KATA' | 'DEMO_CAP_35'): Promise<void> {
     await this.store.activateRulePreset(preset);
+    this.syncFormFromStore();
+  }
+
+  public async resetFullDemo(): Promise<void> {
+    await this.store.resetDemoEnvironment();
     this.syncFormFromStore();
   }
 

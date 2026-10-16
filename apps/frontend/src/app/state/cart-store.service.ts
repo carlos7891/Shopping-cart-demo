@@ -109,6 +109,11 @@ export class CartStoreService {
     }
   }
 
+  public dismissNotification(): void {
+    this.errorMessage.set(null);
+    this.infoMessage.set(null);
+  }
+
   public getProductQuantity(productId: string): number {
     return this.quantitiesByProductId()[productId] ?? 0;
   }
@@ -126,7 +131,7 @@ export class CartStoreService {
     const currentQty = this.quantitiesByProductId()[productId] ?? 0;
     if (currentQty + 1 > product.stock) {
       this.errorMessage.set(
-        `Stock máximo alcanzado para "${product.name}" (${product.stock} disponibles).`
+        `Has alcanzado el límite de stock disponible para "${product.name}" (${product.stock} unidades).`
       );
       return;
     }
@@ -227,7 +232,7 @@ export class CartStoreService {
       this.lastOrder.set(confirmation);
       this.quantitiesByProductId.set({});
       this.quoteBreakdown.set(null);
-      this.infoMessage.set(`¡Orden ${confirmation.orderId} procesada y persistida con éxito!`);
+      this.infoMessage.set(`¡Orden ${confirmation.orderId} procesada con éxito!`);
 
       const [updatedProducts, updatedOrders] = await Promise.all([
         this.api.getProducts(),

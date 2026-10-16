@@ -1,0 +1,39 @@
+<div class="carousel-wrapper">
+  <img
+    class="carousel-image"
+    [src]="currentImage()"
+    [alt]="alt"
+    loading="lazy"
+  />
+
+  @if (hasMultipleImages()) {
+    <button
+      type="button"
+      class="carousel-btn prev"
+      aria-label="Imagen anterior"
+      (click)="prevSlide($event)"
+    >
+      ‹
+    </button>
+    <button
+      type="button"
+      class="carousel-btn next"
+      aria-label="Siguiente imagen"
+      (click)="nextSlide($event)"
+    >
+      ›
+    </button>
+
+    <div class="carousel-dots">
+      @for (img of imagesSignal(); track img; let idx = $index) {
+        <button
+          type="button"
+          class="dot"
+          [class.active]="activeIndex() === idx"
+          [attr.aria-label]="'Ver imagen ' + (idx + 1)"
+          (click)="selectSlide(idx, $event)"
+        ></button>
+      }
+    </div>
+  }
+</div>

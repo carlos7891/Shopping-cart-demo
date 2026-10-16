@@ -1,0 +1,23 @@
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo-dot"></span>
+      <div>
+        <h1>Core E-Commerce Store</h1>
+        <small>Tienda Oficial · Descuentos Acumulativos en Línea</small>
+      </div>
+    </div>
+    <nav class="nav-links">
+      <a routerLink="/checkout" routerLinkActive="active-link">
+        🛒 Tienda &amp; Checkout ({{ store.totalItemsCount() }})
+      </a>
+      <a routerLink="/admin" routerLinkActive="active-link">
+        ⚙️ Rule Engine Studio (/admin)
+      </a>
+    </nav>
+  </header>
+
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>
